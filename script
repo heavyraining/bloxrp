@@ -1,0 +1,134 @@
+-- START OF VITALS (SOV)--
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
+local Window = Library.CreateLib("BloxRP, by heavy_rainingV2", colors)
+local colors = {
+    SchemeColor = Color3.fromRGB(0,255,255),
+    Background = Color3.fromRGB(0, 0, 0),
+    Header = Color3.fromRGB(0, 0, 0),
+    TextColor = Color3.fromRGB(255,255,255),
+    ElementColor = Color3.fromRGB(20, 20, 20)
+}
+-- END OF VITALS (EOV)--
+
+-- START OF TABS (SOT)--
+local TabMisc = Window:NewTab("Miscellaneous")
+local TabPlr = Window:NewTab("Players")
+local TabPurchase = Window:NewTab("Purchasing")
+local TabUI = Window:NewTab("UI Settings")
+-- END OF TABS (EOT)--
+
+-- START OF SECTIONS (SOS) --
+local SectionMisc = TabMisc:NewSection("Miscellaneous")
+local SectionPlrKill = TabPlr:NewSection("Killing Player")
+local SectionPlrUnarrest = TabPlr:NewSection("Unarresting Player")
+local SectionPlrJail = TabPlr:NewSection("Jail Player")
+local SectionTempJob = TabPurchase:NewSection("Temp-Job Items")
+local SectionUI = TabUI:NewSection("Settings")
+-- END OF SECTIONS (EOS)--
+
+-- START OF OPTIONS (SOO) --
+
+SectionUI:NewKeybind("UI Keybind", "Keybind to hide/show.", Enum.KeyCode.RightShift, function()
+	Library:ToggleUI()
+end)
+
+SectionMisc:NewDropdown("Skip Job Promotions", "Changes your job.", {"SWAT Commander", "Police Chief", "SWAT", "Mobster Leader", "Gangster Boss", "Mayors Bodyguard"}, function(currentOption)
+    print(currentOption)
+    local args = {
+        [1] = game:GetService("Teams")[currentOption]
+    }
+    game:GetService("ReplicatedStorage").SwitchJob:FireServer(unpack(args))
+end)
+
+-- START OF CODE FOR PLAYER SELECTION IN DROPDOWN --
+local Plr = {}
+for _, player in pairs(game:GetService("Players"):GetChildren()) do
+    if player:IsA("Player") then
+        table.insert(Plr, player.Name)
+    end
+end
+local drop = SectionPlrUnarrest:NewDropdown("Click to Pick", "Unarrests a specified player.", Plr, function(t)
+   local args = {
+        [1] = game:GetService("Players")[t],
+        [2] = "UnArrest"
+    }
+
+    game:GetService("ReplicatedStorage").FuncArrest:FireServer(unpack(args))
+end)
+local drop2 = SectionPlrKill:NewDropdown("Click to Pick", "Hits a headshot on a specified player.", Plr, function(t)
+    local args = {
+        [1] = "AutoBullet",
+        [2] = CFrame.new(game.workspace[(t)].Head.CFrame.Position),
+        [3] = CFrame.new(180.211716, -2.88530159, -282.03009, 0.861944854, 0.0616121702, -0.503244579, -0, 0.992588699, 0.121522494, 0.507002175, -0.104745686, 0.855556607),
+        [4] = CFrame.new(180.591736, -4.99200153, -282.676147, 0.943769157, 0, -0.330605179, 0, 1, 0, 0.330605179, 0, 0.943769157),
+        [5] = Vector3.new(0.05924759432673454, 0.9820254445075989, -0.1792086958885193)
+    }
+
+    for i=1,3 do
+        game:GetService("ReplicatedStorage"):WaitForChild("Kill"):FireServer(unpack(args))
+        wait(0.2) -- adjust the delay time as needed
+    end
+end)
+
+local drop3 = SectionPlrJail:NewDropdown("Click to Pick", "Builds a jail around a specified player.", Plr, function(t)
+    -- FRONT
+    local args = {
+        [1] = "Fence",
+        [2] = CFrame.new(game.workspace[(t)].Head.CFrame.Position) * CFrame.Angles(-3.1415927410125732, 2.781418402264535e-07, -3.1415927410125732) * CFrame.new(0, 0, 4)
+    }
+
+    game:GetService("ReplicatedStorage"):WaitForChild("PlaceProp"):FireServer(unpack(args))
+
+    -- BACK
+    local args = {
+        [1] = "Fence",
+        [2] = CFrame.new(game.workspace[(t)].Head.CFrame.Position) * CFrame.Angles(-3.1415927410125732, 2.781418402264535e-07, -3.1415927410125732) * CFrame.new(0, 0, -4)
+    }
+
+    game:GetService("ReplicatedStorage"):WaitForChild("PlaceProp"):FireServer(unpack(args))
+
+    -- LEFT
+    local args = {
+        [1] = "Fence",
+        [2] = CFrame.new(game.workspace[(t)].Head.CFrame.Position) * CFrame.Angles(0, 1.5707963705062866, 0) * CFrame.new(0, 0, -4)
+    }
+
+    game:GetService("ReplicatedStorage"):WaitForChild("PlaceProp"):FireServer(unpack(args))
+
+    -- RIGHT
+    local args = {
+        [1] = "Fence",
+        [2] = CFrame.new(game.workspace[(t)].Head.CFrame.Position) * CFrame.Angles(0, 1.5707963705062866, 0) * CFrame.new(0, 0, 4)
+    }
+
+    game:GetService("ReplicatedStorage"):WaitForChild("PlaceProp"):FireServer(unpack(args))
+
+    -- TOP
+    local args = {
+        [1] = "FloorTileBig",
+        [2] = CFrame.new(game.workspace[(t)].Head.CFrame.Position) * CFrame.Angles(0, 1.5707963705062866, 0) * CFrame.new(-5, 4, -4.5)
+    }
+
+    game:GetService("ReplicatedStorage").PlaceProp:FireServer(unpack(args))
+
+    -- BOTTOM
+    local args = {
+        [1] = "FloorTileBig",
+        [2] = CFrame.new(game.workspace[(t)].Head.CFrame.Position) * CFrame.Angles(0, 1.5707963705062866, 0) * CFrame.new(-5, -4, -4.5)
+    }
+
+    game:GetService("ReplicatedStorage").PlaceProp:FireServer(unpack(args))
+end)
+-- END OF CODE FOR PLAYER SELECTION IN DROPDOWN --
+
+SectionTempJob:NewDropdown("Temp-Job Item", "Gives you a temporary job item.", {"Counter-10 (EP)", "M4A1 (SWAT)", "M3 Benelli (EP)"}, function(currentOption)
+    local args = {
+        [1] = "F3Purchase",
+        [2] = game:GetService("ReplicatedStorage").RPitems.Shop.Weapons:FindFirstChild("SWAT Commander"):FindFirstChild(currentOption),
+        [3] = Vector3.new(0.116943359375, -0.07735942304134369, -0.9901211261749268)
+    }
+
+    game:GetService("ReplicatedStorage").FuncShop:FireServer(unpack(args))
+end)
+
+-- END OF OPTIONS (EOO) --
