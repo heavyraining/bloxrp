@@ -1,6 +1,6 @@
 -- START OF VITALS (SOV)--
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
-local Window = Library.CreateLib("BloxRP, by heavy_rainingV2", colors)
+local Window = Library.CreateLib("BloxRP, by heavy_rainingV2 (Therapist#9999)", colors)
 local colors = {
     SchemeColor = Color3.fromRGB(0,255,255),
     Background = Color3.fromRGB(0, 0, 0),
@@ -19,12 +19,23 @@ local TabUI = Window:NewTab("UI Settings")
 
 -- START OF SECTIONS (SOS) --
 local SectionMisc = TabMisc:NewSection("Miscellaneous")
+
+local SectionPlrGeneral = TabPlr:NewSection("General")
 local SectionPlrKill = TabPlr:NewSection("Killing Player")
 local SectionPlrUnarrest = TabPlr:NewSection("Unarresting Player")
 local SectionPlrJail = TabPlr:NewSection("Jail Player")
+local SectionPlrDemote = TabPlr:NewSection("Demoting")
+local SectionPlrDemoteEveryone = TabPlr:NewSection("Demoting (everyone)")
+
 local SectionTempJob = TabPurchase:NewSection("Temp-Job Items")
+
 local SectionUI = TabUI:NewSection("Settings")
 -- END OF SECTIONS (EOS)--
+
+-- START OF VARIABLES (SOVA)--
+local playerToDemote = placeholder
+local demoteReason = noreason
+-- END OF VARIABLES (EOVA)--
 
 -- START OF OPTIONS (SOO) --
 
@@ -47,7 +58,8 @@ for _, player in pairs(game:GetService("Players"):GetChildren()) do
         table.insert(Plr, player.Name)
     end
 end
-local drop = SectionPlrUnarrest:NewDropdown("Click to Pick", "Unarrests a specified player.", Plr, function(t)
+
+local dropunarrest = SectionPlrUnarrest:NewDropdown("Click to Pick", "Unarrests a specified player.", Plr, function(t)
    local args = {
         [1] = game:GetService("Players")[t],
         [2] = "UnArrest"
@@ -55,7 +67,7 @@ local drop = SectionPlrUnarrest:NewDropdown("Click to Pick", "Unarrests a specif
 
     game:GetService("ReplicatedStorage").FuncArrest:FireServer(unpack(args))
 end)
-local drop2 = SectionPlrKill:NewDropdown("Click to Pick", "Hits a headshot on a specified player.", Plr, function(t)
+local dropkill = SectionPlrKill:NewDropdown("Click to Pick", "Hits a headshot on a specified player.", Plr, function(t)
     local args = {
         [1] = "AutoBullet",
         [2] = CFrame.new(game.workspace[(t)].Head.CFrame.Position),
@@ -70,7 +82,7 @@ local drop2 = SectionPlrKill:NewDropdown("Click to Pick", "Hits a headshot on a 
     end
 end)
 
-local drop3 = SectionPlrJail:NewDropdown("Click to Pick", "Builds a jail around a specified player.", Plr, function(t)
+local dropjail = SectionPlrJail:NewDropdown("Click to Pick", "Builds a jail around a specified player.", Plr, function(t)
     -- FRONT
     local args = {
         [1] = "Fence",
@@ -106,7 +118,7 @@ local drop3 = SectionPlrJail:NewDropdown("Click to Pick", "Builds a jail around 
     -- TOP
     local args = {
         [1] = "FloorTileBig",
-        [2] = CFrame.new(game.workspace[(t)].Head.CFrame.Position) * CFrame.Angles(0, 1.5707963705062866, 0) * CFrame.new(-5, 4, -4.5)
+        [2] = CFrame.new(game.workspace[(t)].Head.CFrame.Position) * CFrame.Angles(0, 1.5707963705062866, 0) * CFrame.new(-5, 4.5, -4.5)
     }
 
     game:GetService("ReplicatedStorage").PlaceProp:FireServer(unpack(args))
@@ -114,10 +126,14 @@ local drop3 = SectionPlrJail:NewDropdown("Click to Pick", "Builds a jail around 
     -- BOTTOM
     local args = {
         [1] = "FloorTileBig",
-        [2] = CFrame.new(game.workspace[(t)].Head.CFrame.Position) * CFrame.Angles(0, 1.5707963705062866, 0) * CFrame.new(-5, -4, -4.5)
+        [2] = CFrame.new(game.workspace[(t)].Head.CFrame.Position) * CFrame.Angles(0, 1.5707963705062866, 0) * CFrame.new(-5, -4.5, -4.5)
     }
 
     game:GetService("ReplicatedStorage").PlaceProp:FireServer(unpack(args))
+end)
+
+local dropdemote = SectionPlrDemote:NewDropdown("Select Player", "Selects Player to Demote", Plr, function(t)
+    playerToDemote = (t)
 end)
 -- END OF CODE FOR PLAYER SELECTION IN DROPDOWN --
 
@@ -131,4 +147,31 @@ SectionTempJob:NewDropdown("Temp-Job Item", "Gives you a temporary job item.", {
     game:GetService("ReplicatedStorage").FuncShop:FireServer(unpack(args))
 end)
 
+SectionPlrDemote:NewTextBox("Demote Reason", "Sets reason to demote specified player.", function(txt)
+	demoteReason = (txt)
+end)
+
+SectionPlrDemote:NewButton("Spam Demote Selected Player", "Launches multiple demotes on selected player.", function()
+    local args = {
+        [1] = "StartDemotion",
+        [2] = game:GetService("Players")[(playerToDemote)],
+        [3] = (demoteReason)
+    }
+
+    for i = 1, 10 do
+        game:GetService("ReplicatedStorage").PlayerCommunication:FireServer(unpack(args))
+    end
+end)
+
+SectionPlrDemoteEveryone:NewTextBox("Demote Everyone", "The text input is the demote reason.", function(txt)
+    local args = {
+        [1] = "StartDemotion",
+        [3] = (txt)
+    }
+
+    for _, player in pairs(game:GetService("Players"):GetPlayers()) do
+        args[2] = player
+        game:GetService("ReplicatedStorage").PlayerCommunication:FireServer(unpack(args))
+    end
+end)
 -- END OF OPTIONS (EOO) --
