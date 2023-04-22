@@ -1,6 +1,7 @@
 -- START OF VITALS (SOV)--
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
 local Window = Library.CreateLib("BloxRP, by heavy_rainingV2 (Therapist#9999)", colors)
+local players = game:GetService("Players"):GetPlayers()
 local colors = {
     SchemeColor = Color3.fromRGB(0,255,255),
     Background = Color3.fromRGB(0, 0, 0),
@@ -13,6 +14,7 @@ local colors = {
 -- START OF TABS (SOT)--
 local TabMisc = Window:NewTab("Miscellaneous")
 local TabPlr = Window:NewTab("Players")
+local TabTroll = Window:NewTab("Trolling")
 local TabPurchase = Window:NewTab("Purchasing")
 local TabUI = Window:NewTab("UI Settings")
 -- END OF TABS (EOT)--
@@ -26,6 +28,9 @@ local SectionPlrUnarrest = TabPlr:NewSection("Unarresting Player")
 local SectionPlrJail = TabPlr:NewSection("Jail Player")
 local SectionPlrDemote = TabPlr:NewSection("Demoting")
 local SectionPlrDemoteEveryone = TabPlr:NewSection("Demoting (everyone)")
+local SectionPlrWarrantEveryone = TabPlr:NewSection("Warranting (everyone)")
+
+local SectionTroll = TabTroll:NewSection("Trolling")
 
 local SectionTempJob = TabPurchase:NewSection("Temp-Job Items")
 
@@ -34,7 +39,9 @@ local SectionUI = TabUI:NewSection("Settings")
 
 -- START OF VARIABLES (SOVA)--
 local playerToDemote = placeholder
-local demoteReason = noreason
+local demoteReason = no_reason
+
+local warrantReason = no_reason
 -- END OF VARIABLES (EOVA)--
 
 -- START OF OPTIONS (SOO) --
@@ -42,6 +49,20 @@ local demoteReason = noreason
 SectionUI:NewKeybind("UI Keybind", "Keybind to hide/show.", Enum.KeyCode.RightShift, function()
 	Library:ToggleUI()
 end)
+
+SectionMisc:NewButton("Free Diamond Fuses", "Makes any fuse you buy diamond.", function()
+    local mt = getrawmetatable(game)
+    local old = mt.__namecall
+    setreadonly(mt, false)
+    mt.__namecall = newcclosure(function(self, ...)
+        local args = {...}
+        if getnamecallmethod() == 'FireServer' and self.Name == 'BuyNewFuse' then
+            args[1] = "Diamond Fuse"
+        end
+        return old(self, unpack(args))
+    end)
+end)
+
 
 SectionMisc:NewDropdown("Skip Job Promotions", "Changes your job.", {"SWAT Commander", "Police Chief", "SWAT", "Mobster Leader", "Gangster Boss", "Mayors Bodyguard"}, function(currentOption)
     print(currentOption)
@@ -132,8 +153,19 @@ local dropjail = SectionPlrJail:NewDropdown("Click to Pick", "Builds a jail arou
     game:GetService("ReplicatedStorage").PlaceProp:FireServer(unpack(args))
 end)
 
-local dropdemote = SectionPlrDemote:NewDropdown("Select Player", "Selects Player to Demote", Plr, function(t)
+local dropdemote = SectionPlrDemote:NewDropdown("Select Player", "Selects Player to demote.", Plr, function(t)
     playerToDemote = (t)
+end)
+
+local droplicense = SectionTroll:NewDropdown("License Spam", "Selects Player to spam.", Plr, function(t)
+    local args = {
+        [1] = "reqGunPerm",
+        [2] = game:GetService("Players")[(t)]
+    }
+    
+    for i = 1, 200 do
+        game:GetService("ReplicatedStorage").PlayerCommunication:FireServer(unpack(args))
+    end
 end)
 -- END OF CODE FOR PLAYER SELECTION IN DROPDOWN --
 
@@ -172,6 +204,61 @@ SectionPlrDemoteEveryone:NewTextBox("Demote Everyone", "The text input is the de
     for _, player in pairs(game:GetService("Players"):GetPlayers()) do
         args[2] = player
         game:GetService("ReplicatedStorage").PlayerCommunication:FireServer(unpack(args))
+    end
+end)
+
+SectionPlrDemoteEveryone:NewTextBox("Demote Government", "The text input is the demote reason.", function(txt)
+    for i, player in ipairs(players) do
+        local args = {
+            [1] = player,
+            [2] = (txt)
+        }
+        game:GetService("ReplicatedStorage").FuncGovDemotion:FireServer(unpack(args))
+    end
+end)
+
+SectionPlrDemoteEveryone:NewTextBox("Demote Mafia", "The text input is the demote reason.", function(txt)
+    for i, player in ipairs(players) do
+        local args = {
+            [1] = player,
+            [2] = (txt)
+        }
+        game:GetService("ReplicatedStorage").FuncGangDemotion:FireServer(unpack(args))
+    end
+end)
+
+SectionPlrWarrantEveryone:NewTextBox("Warrant Reason", "Sets reason to warrant/unwarrant everyone.", function(txt)
+	warrantReason = (txt)
+end)
+
+SectionPlrWarrantEveryone:NewButton("Warrant Everyone", "Warrants everyone in the server.", function()
+    for i, player in ipairs(players) do
+        local args = {
+            [1] = player,
+            [2] = "ReqWanted",
+            [3] = (warrantReason)
+        }
+        game:GetService("ReplicatedStorage").FuncWanted:FireServer(unpack(args))
+    end
+end)
+
+SectionPlrWarrantEveryone:NewButton("Unwarrant Everyone", "Unwarrants everyone in the server.", function()
+    for i, player in ipairs(players) do
+        local args = {
+            [1] = player,
+            [2] = "ReqUnWanted",
+            [3] = (warrantReason)
+        }
+        game:GetService("ReplicatedStorage").FuncWanted:FireServer(unpack(args))
+    end
+end)
+
+SectionTroll:NewButton("Homeless Earrape", "Plays spare change on everyone.. :3", function()
+    for i, player in ipairs(players) do
+        local args = {
+            [1] = player.Character.HumanoidRootPart.Position,
+        }
+        game:GetService("ReplicatedStorage").FuncBegger:FireServer(unpack(args))
     end
 end)
 -- END OF OPTIONS (EOO) --
