@@ -13,10 +13,11 @@ local colors = {
 
 -- START OF TABS (SOT)--
 local TabMisc = Window:NewTab("Miscellaneous")
-local TabMoney = Window:NewTab("Money")
 local TabPlr = Window:NewTab("Players")
+local TabMoney = Window:NewTab("Money")
 local TabTroll = Window:NewTab("Trolling")
 local TabPurchase = Window:NewTab("Purchasing")
+local TabInfo = Window:NewTab("Player Info")
 local TabUI = Window:NewTab("UI Settings")
 -- END OF TABS (EOT)--
 
@@ -38,6 +39,8 @@ local SectionUI = TabUI:NewSection("Settings")
 
 local SectionInfMoney = TabMoney:NewSection("Infinite Bloxcoin")
 local SectionGiveMoney = TabMoney:NewSection("Money Giving")
+
+local SectionInfo = TabInfo:NewSection("PLAYER INFO")
 -- END OF SECTIONS (EOS)--
 
 -- START OF VARIABLES (SOVA)--
@@ -50,6 +53,88 @@ local givingMoney = false
 -- END OF VARIABLES (EOVA)--
 
 -- START OF OPTIONS (SOO) --
+function addCommas(number)
+	local integerNumber = math.floor(number)
+
+	local formattedNumber = tostring(integerNumber):reverse():gsub("(%d%d%d)","%1,"):reverse():gsub("^,", "")
+
+	return formattedNumber
+end
+function cutDecimal(number, decimalPlaces)
+	local numString = tostring(number)
+   
+	local decimalPos = string.find(numString, '%.')
+
+	if decimalPos then    
+		local result = string.sub(numString, 1, decimalPos + decimalPlaces)
+		return tonumber(result)
+	else
+		return number
+	end
+end
+function convertMinutes(minutes)
+	local days = math.floor(minutes / (24 * 60))
+	local hours = math.floor((minutes % (24 * 60)) / 60)
+	local remainingMinutes = minutes % 60
+
+	return days, hours, remainingMinutes
+end
+
+local playerSelectedLabelInfo = SectionInfo:NewLabel("No player selected (pick a player in the Players tab!)")
+local moneyInfo = SectionInfo:NewLabel("Money will appear here")
+local bloxcoinInfo = SectionInfo:NewLabel("BloxCoin will appear here")
+local playtimeInfo = SectionInfo:NewLabel("Playtime will appear here")
+local licenseInfo = SectionInfo:NewLabel("License status will appear here")
+
+local function refreshInfo()
+	if not selectedPlayer then
+		return
+	end
+	local leaderstats = game.Players[selectedPlayer].leaderstats
+	
+	playerSelectedLabelInfo:UpdateLabel(selectedPlayer)
+	
+	local deposited = leaderstats.Parent.BankAccounts["Bank of Blox State"].Balance.Money.Value
+	local depositedString = tostring(deposited)
+	local depositedFinal = addCommas(depositedString)
+	local moneyString = tostring(leaderstats.Money.Value)
+	local moneyFinal = addCommas(moneyString)
+	moneyInfo:UpdateLabel("MONEY: ".. moneyFinal.. "$ (+".. depositedFinal.. "$ in the bank)")
+	
+	local cryptoBalance = leaderstats.Crypto.BloxCoin.Value
+	if cryptoBalance == "inf" then
+		bloxcoinInfo:UpdateLabel("BLOXCOIN: Infinite! "..selectedPlayer.." is an exploiter!")
+	else
+		local cryptoValueString = game.Workspace.building_bank.Crypto_Premium_Prices.Screen.UI.Holder.BloxCoin.UnderTitle_Sell.Text:gsub("%$", "")
+		local cryptoValue = tonumber(cryptoValueString)
+		local cryptoBalanceSimplified = cutDecimal(cryptoBalance, 2)
+		local cryptoBalanceString = tostring(cryptoBalanceSimplified)
+		local cryptoWorth = cryptoValue*cryptoBalance
+		local cryptoWorthString = tostring(cryptoWorth)
+		local cryptoWorthFinal = addCommas(cryptoWorthString)
+		bloxcoinInfo:UpdateLabel("BLOXCOIN: ".. cryptoBalanceString.. "$ (Worth ".. cryptoWorthFinal.. "$)")
+	end
+	
+	local days, hours, remainingMinutes = convertMinutes(leaderstats.PlayingTime.Value)
+	playtimeInfo:UpdateLabel("PLAYTIME: Days: "..days.." | Hours: "..hours.." | Minutes: "..remainingMinutes)
+	
+	if leaderstats.GunPerm.Value == "none" then
+		licenseInfo:UpdateLabel(selectedPlayer.. " has no weapons license")
+	elseif leaderstats.GunPerm.Value == "Visible" then
+		licenseInfo:UpdateLabel(selectedPlayer.. " has a visible weapons license")
+	elseif leaderstats.GunPerm.Value == "Concealed" then
+		licenseInfo:UpdateLabel(selectedPlayer.. " has a concealed weapons license")
+	end
+end
+
+local function refreshInfoLoop()
+	while true do
+		refreshInfo()
+		wait(1)
+	end
+end
+
+spawn(refreshInfoLoop)
 
 SectionUI:NewKeybind("UI Keybind", "Keybind to hide/show.", Enum.KeyCode.RightShift, function()
 	Library:ToggleUI()
@@ -86,6 +171,7 @@ end
 
 local dropglobal = SectionSelectPlr:NewDropdown("Click to Pick", "Specify a player for other things...", Plr, function(t)
 	selectedPlayer = t
+	refreshInfo()
 end)
 local dropunarrest = SectionPlrUnarrest:NewDropdown("Click to Pick", "Unarrests a specified player.", Plr, function(t)
 	local args = {
@@ -329,22 +415,22 @@ end)
 
 coroutine.resume(moneyCoroutine)
 
+-- END OF OPTIONS (EOO) --
+
 local function refreshPlayers()
 	local players = {}
 	for i, v in pairs(game.Players:GetPlayers()) do
 		table.insert(players, v.Name)
 	end
 	
-	wait()
 	dropglobal:Refresh(players)
+	dropjail:Refresh(players)
 	dropkill:Refresh(players)
 	dropdemote:Refresh(players)
 	droplicense:Refresh(players)
 	dropunarrest:Refresh(players)
-	dropjail:Refresh(players)
 end
 refreshPlayers()
 
 game.Players.PlayerAdded:Connect(refreshPlayers)
 game.Players.PlayerRemoving:Connect(refreshPlayers)
--- END OF OPTIONS (EOO) --
