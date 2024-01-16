@@ -1,7 +1,6 @@
 -- START OF VITALS (SOV)--
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/heavyraining/ModifiedKavoUI/main/main"))()
 local Window = Library.CreateLib("6092065 x Therapist")
-local players = nil
 
 local colors = {
 	SchemeColor = Color3.fromRGB(0,255,255),
@@ -46,6 +45,8 @@ local selectedPlayer = nil
 local demoteReason = nil
 
 local warrantReason = nil
+
+local givingMoney = false
 -- END OF VARIABLES (EOVA)--
 
 -- START OF OPTIONS (SOO) --
@@ -83,7 +84,7 @@ for _, player in pairs(game:GetService("Players"):GetChildren()) do
 	end
 end
 
-local dropunarrest = SectionSelectPlr:NewDropdown("Click to Pick", "Specify a player for other things...", Plr, function(t)
+local dropglobal = SectionSelectPlr:NewDropdown("Click to Pick", "Specify a player for other things...", Plr, function(t)
 	selectedPlayer = t
 end)
 local dropunarrest = SectionPlrUnarrest:NewDropdown("Click to Pick", "Unarrests a specified player.", Plr, function(t)
@@ -303,10 +304,16 @@ SectionInfMoney:NewButton("Sell Crypto", "Sells 20 BloxCoin if the market is ope
 end)
 
 SectionGiveMoney:NewToggle("Give Money", "Select the player in Players section.", function(state)
-	local on = state
-	
+	if state then
+		givingMoney = true
+	else
+		givingMoney = false
+	end
+end)
+
+local moneyCoroutine = coroutine.create(function()
 	while true do
-		if on then
+		if givingMoney then
 			local args = {
 				[1] = "GiveMoney",
 				[2] = game:GetService("Players")[selectedPlayer],
@@ -319,17 +326,25 @@ SectionGiveMoney:NewToggle("Give Money", "Select the player in Players section."
 		wait()
 	end
 end)
--- END OF OPTIONS (EOO) --
+
+coroutine.resume(moneyCoroutine)
 
 local function refreshPlayers()
-	players = game:GetService("Players"):GetPlayers()
-	dropjail:Refresh(players)
+	local players = {}
+	for i, v in pairs(game.Players:GetPlayers()) do
+		table.insert(players, v.Name)
+	end
+	
+	wait()
+	dropglobal:Refresh(players)
 	dropkill:Refresh(players)
 	dropdemote:Refresh(players)
 	droplicense:Refresh(players)
 	dropunarrest:Refresh(players)
+	dropjail:Refresh(players)
 end
 refreshPlayers()
 
 game.Players.PlayerAdded:Connect(refreshPlayers)
 game.Players.PlayerRemoving:Connect(refreshPlayers)
+-- END OF OPTIONS (EOO) --
